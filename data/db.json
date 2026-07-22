@@ -1,0 +1,279 @@
+{
+  "subjects": [
+    {
+      "id": "sub-cn",
+      "name": "Computer Networks",
+      "code": "CS301"
+    },
+    {
+      "id": "sub-db",
+      "name": "Database Management Systems",
+      "code": "CS302"
+    }
+  ],
+  "modules": [
+    {
+      "id": "mod-cn-1",
+      "subject_id": "sub-cn",
+      "number": 1,
+      "title": "Introduction and Physical Layer"
+    },
+    {
+      "id": "mod-cn-2",
+      "subject_id": "sub-cn",
+      "number": 2,
+      "title": "Data Link Layer and MAC Sublayer"
+    },
+    {
+      "id": "mod-cn-3",
+      "subject_id": "sub-cn",
+      "number": 3,
+      "title": "Network Layer Routing and IP"
+    },
+    {
+      "id": "mod-db-1",
+      "subject_id": "sub-db",
+      "number": 1,
+      "title": "Introduction and E-R Model"
+    },
+    {
+      "id": "mod-db-2",
+      "subject_id": "sub-db",
+      "number": 2,
+      "title": "Relational Model and SQL"
+    },
+    {
+      "id": "mod-db-3",
+      "subject_id": "sub-db",
+      "number": 3,
+      "title": "Normalization and Transaction Control"
+    }
+  ],
+  "topics": [
+    {
+      "id": "top-cn-transmission",
+      "module_id": "mod-cn-1",
+      "name": "Transmission Media & Nyquist Theorem",
+      "content_hash": "seed",
+      "version": 1,
+      "last_updated": "2026-07-22T17:37:00.045Z"
+    },
+    {
+      "id": "top-cn-framing",
+      "module_id": "mod-cn-2",
+      "name": "Framing, Error Detection & Correction (CRC)",
+      "content_hash": "seed",
+      "version": 1,
+      "last_updated": "2026-07-22T17:37:00.047Z"
+    },
+    {
+      "id": "top-cn-routing",
+      "module_id": "mod-cn-3",
+      "name": "Link State Routing vs Distance Vector Routing",
+      "content_hash": "seed",
+      "version": 1,
+      "last_updated": "2026-07-22T17:37:00.047Z"
+    },
+    {
+      "id": "top-db-er",
+      "module_id": "mod-db-1",
+      "name": "ER Diagrams and Mapping to Tables",
+      "content_hash": "seed",
+      "version": 1,
+      "last_updated": "2026-07-22T17:37:00.047Z"
+    },
+    {
+      "id": "top-db-sql",
+      "module_id": "mod-db-2",
+      "name": "SQL Joins, Subqueries and Relational Algebra",
+      "content_hash": "seed",
+      "version": 1,
+      "last_updated": "2026-07-22T17:37:00.047Z"
+    },
+    {
+      "id": "top-db-normal",
+      "module_id": "mod-db-3",
+      "name": "Functional Dependencies, 3NF and BCNF",
+      "content_hash": "seed",
+      "version": 1,
+      "last_updated": "2026-07-22T17:37:00.047Z"
+    }
+  ],
+  "documents": [],
+  "chunks": [],
+  "notes": [
+    {
+      "id": "note-1",
+      "topic_id": "top-cn-routing",
+      "version": 1,
+      "depth": "2mark",
+      "content_md": "### Concept of Routing Algorithms\n\nRouting algorithms determine the optimal path for transferring packet data from a source router to a destination router across a network. Standard models include **Distance Vector Routing** (based on localized Bellman-Ford node updates) and **Link State Routing** (where each node maintains complete, global topological maps via link-state packets).\n\n*(Source: CN_Syllabus_Guide.pdf, p.14)*",
+      "confidence": "grounded",
+      "generated_at": "2026-07-22T17:37:00.047Z"
+    },
+    {
+      "id": "note-2",
+      "topic_id": "top-cn-routing",
+      "version": 3,
+      "depth": "6mark",
+      "content_md": "### Link State vs Distance Vector Routing\n\nThere are two primary algorithms used for path selection in the Network Layer:\n\n1. **Distance Vector Routing (DVR)**:\n   - Each router maintains a table (Vector) of minimum distances to all known destinations.\n   - Routers periodically exchange routing tables with direct neighbors only.\n   - Suffers from the **Count-to-Infinity problem** during link failures.\n   \n2. **Link State Routing (LSR)**:\n   - Each router builds and floods Link State Packets (LSPs) across the network.\n   - Every node independently calculates the shortest path tree using **Dijkstra's Algorithm**.\n   - High memory requirements but resolves topology changes instantly with zero convergence loops.\n\n*(Source: CN_Syllabus_Guide.pdf, p.14)*\n\n### Process Flow Visualizer\n\n```mermaid\ngraph TD\n    A[Start Process] --> B[Execute Algorithms]\n    B --> C{Decision Path}\n    C -->|Success| D[Final Output]\n    C -->|Failure| E[Review Logs]\n```\n",
+      "confidence": "grounded",
+      "generated_at": "2026-07-22T17:47:11.472Z",
+      "summary_md": "- **Core Takeaway**: This is a key takeaway from the note about core principles.\n- **Significance**: Exam preparation requires focusing on key highlighted definitions.\n- **Application**: Practical questions often require executing specific algorithms outlined in the syllabus."
+    }
+  ],
+  "pyqs": [
+    {
+      "id": "pyq-1",
+      "subject_id": "sub-cn",
+      "year": 2024,
+      "question_text": "Differentiate between Distance Vector Routing and Link State Routing. Explain Dijkstra's path calculations.",
+      "topic_id": "top-cn-routing",
+      "marks": 10,
+      "difficulty": "hard"
+    },
+    {
+      "id": "pyq-2",
+      "subject_id": "sub-cn",
+      "year": 2023,
+      "question_text": "What is the count-to-infinity problem in routing? How does split-horizon mitigate it?",
+      "topic_id": "top-cn-routing",
+      "marks": 6,
+      "difficulty": "medium"
+    },
+    {
+      "id": "pyq-3",
+      "subject_id": "sub-cn",
+      "year": 2024,
+      "question_text": "Calculate the CRC checksum for a bit frame 1101011011 using polynomial x^4 + x + 1.",
+      "topic_id": "top-cn-framing",
+      "marks": 10,
+      "difficulty": "hard"
+    },
+    {
+      "id": "pyq-4",
+      "subject_id": "sub-cn",
+      "year": 2022,
+      "question_text": "Explain the difference between guided and unguided transmission media.",
+      "topic_id": "top-cn-transmission",
+      "marks": 6,
+      "difficulty": "easy"
+    },
+    {
+      "id": "pyq-5",
+      "subject_id": "sub-cn",
+      "year": 2021,
+      "question_text": "What is the maximum channel capacity of a noiseless 4kHz channel according to Nyquist?",
+      "topic_id": "top-cn-transmission",
+      "marks": 2,
+      "difficulty": "easy"
+    },
+    {
+      "id": "pyq-6",
+      "subject_id": "sub-db",
+      "year": 2023,
+      "question_text": "Explain 3NF and BCNF with a suitable example. Why is BCNF stricter than 3NF?",
+      "topic_id": "top-db-normal",
+      "marks": 10,
+      "difficulty": "hard"
+    },
+    {
+      "id": "pyq-7",
+      "subject_id": "sub-db",
+      "year": 2024,
+      "question_text": "Write SQL queries to join student and course tables and fetch department averages.",
+      "topic_id": "top-db-sql",
+      "marks": 6,
+      "difficulty": "medium"
+    },
+    {
+      "id": "pyq-8",
+      "subject_id": "sub-db",
+      "year": 2024,
+      "question_text": "Map a Weak Entity set with discriminator attributes to database tables.",
+      "topic_id": "top-db-er",
+      "marks": 6,
+      "difficulty": "medium"
+    },
+    {
+      "id": "pyq-9",
+      "subject_id": "sub-db",
+      "year": 2022,
+      "question_text": "Define primary key, candidate key, and foreign key.",
+      "topic_id": "top-db-er",
+      "marks": 2,
+      "difficulty": "easy"
+    }
+  ],
+  "topic_importance": [
+    {
+      "topic_id": "top-cn-routing",
+      "frequency_count": 2,
+      "difficulty_avg": 2.5,
+      "last_recalculated": "2026-07-22T17:37:00.048Z"
+    },
+    {
+      "topic_id": "top-cn-framing",
+      "frequency_count": 1,
+      "difficulty_avg": 3,
+      "last_recalculated": "2026-07-22T17:37:00.048Z"
+    },
+    {
+      "topic_id": "top-cn-transmission",
+      "frequency_count": 2,
+      "difficulty_avg": 1,
+      "last_recalculated": "2026-07-22T17:37:00.048Z"
+    },
+    {
+      "topic_id": "top-db-normal",
+      "frequency_count": 1,
+      "difficulty_avg": 3,
+      "last_recalculated": "2026-07-22T17:37:00.048Z"
+    },
+    {
+      "topic_id": "top-db-sql",
+      "frequency_count": 1,
+      "difficulty_avg": 2,
+      "last_recalculated": "2026-07-22T17:37:00.048Z"
+    },
+    {
+      "topic_id": "top-db-er",
+      "frequency_count": 2,
+      "difficulty_avg": 1.5,
+      "last_recalculated": "2026-07-22T17:37:00.048Z"
+    }
+  ],
+  "flashcards": [
+    {
+      "id": "fc-1",
+      "topic_id": "top-cn-routing",
+      "question": "What algorithm is used in Link State Routing to calculate the shortest path?",
+      "answer": "Dijkstra's Algorithm, which creates a shortest path tree by scanning global topological data flooded via Link State Packets.",
+      "ease_factor": 2.5,
+      "next_review_at": "2026-07-22T17:37:00.048Z",
+      "interval_days": 1,
+      "repetitions": 0
+    },
+    {
+      "id": "fc-2",
+      "topic_id": "top-cn-routing",
+      "question": "What major convergence routing error occurs in Distance Vector Routing?",
+      "answer": "The Count-to-Infinity problem, where routers repeatedly increments cost hops in a loop when a link goes completely down.",
+      "ease_factor": 2.5,
+      "next_review_at": "2026-07-22T17:37:00.048Z",
+      "interval_days": 1,
+      "repetitions": 0
+    },
+    {
+      "id": "fc-3",
+      "topic_id": "top-db-normal",
+      "question": "What makes BCNF stricter than 3NF?",
+      "answer": "BCNF requires that for every functional dependency X -> Y, X must be a super key. 3NF relaxes this by allowing Y to be a prime attribute.",
+      "ease_factor": 2.5,
+      "next_review_at": "2026-07-22T17:37:00.048Z",
+      "interval_days": 1,
+      "repetitions": 0
+    }
+  ],
+  "classroom_mappings": []
+}
