@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, RefreshCw, Sparkles, Brain, Download, HelpCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { Subject } from '../types';
 import { exportFormulaSheetToMarkdown } from '../utils/exportManager';
 
@@ -124,7 +126,7 @@ export default function FormulaSheet({ subjects, selectedSubject }: FormulaSheet
 
                 {/* Structured Table Container */}
                 <div className="prose prose-invert prose-sm max-w-none text-slate-300 font-sans overflow-x-auto">
-                  <ReactMarkdown>{sheetMd}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{sheetMd}</ReactMarkdown>
                 </div>
               </div>
             ) : (

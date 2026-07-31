@@ -51,11 +51,10 @@ async function parsePdfPages(buffer: Buffer): Promise<Array<{ page: number; text
   return pages;
 }
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+export const app = express();
+const PORT = process.env.PORT || 3000;
 
-  app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '10mb' }));
 
   // --- API ROUTES ---
 
@@ -1098,13 +1097,16 @@ async function startServer() {
 
 
   // --- VITE DEV / PRODUCTION INTEGRATION ---
-  if (process.env.NODE_ENV !== 'production') {
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa'
-    });
-    app.use(vite.middlewares);
-  } else {
+  if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+    // We use a dynamic import and IIFE for the dev server so we don't block the main export
+    (async () => {
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa'
+      });
+      app.use(vite.middlewares);
+    })();
+  } else if (!process.env.VERCEL) {
     const distPath = path.resolve(process.cwd(), 'dist');
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
@@ -1112,9 +1114,8 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Tattva full-stack engine booted successfully on port ${PORT}`);
-  });
-}
-
-startServer();
+  if (!process.env.VERCEL) {
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Tattva full-stack engine booted successfully on port ${PORT}`);
+    });
+  }

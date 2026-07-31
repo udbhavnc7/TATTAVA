@@ -6,6 +6,8 @@ import {
   PenSquare, Save, XCircle, Trash2
 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import mermaid from 'mermaid';
 import { Subject, Module, Topic, Note } from '../types';
 import { generateMermaidDiagram } from '../utils/diagramGenerator';
@@ -687,7 +689,7 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
   const renderNoteMarkdown = (markdown: string) => {
     const parts = markdown.split(/```mermaid([\s\S]*?)```/);
     if (parts.length === 1) {
-      return <ReactMarkdown>{markdown}</ReactMarkdown>;
+      return <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{markdown}</ReactMarkdown>;
     }
 
     return (
@@ -702,7 +704,7 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
               </div>
             );
           }
-          return <ReactMarkdown key={index}>{part}</ReactMarkdown>;
+          return <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]} key={index}>{part}</ReactMarkdown>;
         })}
       </div>
     );
@@ -1271,7 +1273,7 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
                       ) : note.summary_md ? (
                         /* Render Bullet Takeaways */
                         <div className="prose prose-invert max-w-none text-xs text-slate-300 leading-relaxed pl-1">
-                          <ReactMarkdown>{note.summary_md}</ReactMarkdown>
+                          <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{note.summary_md}</ReactMarkdown>
                         </div>
                       ) : !isOnline ? (
                         <p className="text-xs text-slate-400 italic pl-1 font-mono">

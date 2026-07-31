@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Brain, Bot, User, RefreshCw, Sparkles, BookOpen, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
 import { Subject } from '../types';
 
 interface Message {
@@ -159,7 +161,7 @@ export default function DoubtSolver({ subjects, selectedSubject }: DoubtSolverPr
                     : 'bg-slate-950 border-slate-800/80 text-slate-300 rounded-tl-none'
                 }`}>
                   <div className="prose prose-invert prose-sm max-w-none space-y-2">
-                    <ReactMarkdown>{msg.text}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{msg.text}</ReactMarkdown>
                   </div>
                 </div>
 

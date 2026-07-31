@@ -106,7 +106,7 @@ export interface TattvaDB {
   classroom_mappings?: ClassroomMapping[];
 }
 
-const DB_DIR = path.resolve(process.cwd(), 'data');
+const DB_DIR = process.env.VERCEL ? path.join('/tmp', 'data') : path.resolve(process.cwd(), 'data');
 const DB_FILE = path.join(DB_DIR, 'db.json');
 
 // Helper to calculate cosine similarity
