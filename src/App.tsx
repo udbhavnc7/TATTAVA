@@ -103,13 +103,14 @@ export default function App() {
         <div className="p-6 space-y-6">
           
           {/* Brand Identity / Logo */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#D4AF37] to-[#8A6D3B] rounded-xl flex items-center justify-center shadow-lg shadow-[#D4AF37]/15">
-              <span className="text-black font-serif font-bold text-lg">T</span>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-[#00F0FF]/20 to-[#B53CFF]/40 rounded-xl flex items-center justify-center border border-[#00F0FF]/50 shadow-[0_0_15px_rgba(181,60,255,0.5)] animate-arcane-pulse relative overflow-hidden">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMTgiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgwLCAyNDAsIDI1NSwgMC4yKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHBhdGggZD0iTTIwIDJMMjAgMzgiIHN0cm9rZT0icmdiYSgxODEsIDYwLCAyNTUsIDAuMykiLz48cGF0aCBkPSJNMjAgMjBMMzYgMzYiIHN0cm9rZT0icmdiYSgyMTIsIDE3NSwgNTUsIDAuMykiLz48L3N2Zz4=')] opacity-50 bg-center bg-no-repeat" />
+              <span className="text-white font-serif font-bold text-2xl relative z-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">T</span>
             </div>
             <div className="space-y-0.5">
-              <h1 className="font-serif font-light text-xl leading-none text-slate-100 tracking-widest">TATTVA</h1>
-              <p className="text-[9px] font-mono text-[#D4AF37] uppercase tracking-[0.2em] font-bold">Exam Engine</p>
+              <h1 className="font-serif font-light text-2xl leading-none text-transparent bg-clip-text bg-gradient-to-r from-slate-100 to-[#D4AF37] tracking-[0.25em]">TATTVA</h1>
+              <p className="text-[10px] font-mono text-[#00F0FF] uppercase tracking-[0.25em] font-bold drop-shadow-[0_0_5px_rgba(0,240,255,0.5)]">Exam Engine</p>
             </div>
           </div>
  
@@ -129,14 +130,17 @@ export default function App() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold font-mono transition-all ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold font-mono transition-all duration-300 relative overflow-hidden ${
                     activeTab === tab.id 
-                      ? 'bg-slate-950 border border-slate-800 text-slate-100 shadow-inner shadow-black/40' 
-                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-950/20'
+                      ? 'bg-slate-850/80 border border-accent-teal/50 text-white shadow-[0_0_15px_rgba(0,240,255,0.2),inset_0_0_10px_rgba(0,240,255,0.1)]' 
+                      : 'text-slate-400 border border-transparent hover:text-slate-200 hover:bg-slate-950/40 hover:border-slate-800/50'
                   }`}
                 >
-                  <Icon className={`h-4 w-4 shrink-0 ${activeTab === tab.id ? 'text-accent-teal' : 'text-slate-500'}`} />
-                  {tab.label}
+                  {activeTab === tab.id && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-accent-teal shadow-[0_0_10px_#00F0FF]" />
+                  )}
+                  <Icon className={`h-4 w-4 shrink-0 z-10 ${activeTab === tab.id ? 'text-accent-teal drop-shadow-[0_0_5px_#00F0FF]' : 'text-slate-500'}`} />
+                  <span className="z-10 tracking-wide">{tab.label}</span>
                 </button>
               );
             })}
@@ -150,14 +154,17 @@ export default function App() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold font-mono transition-all ${
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold font-mono transition-all duration-300 relative overflow-hidden ${
                     activeTab === tab.id 
-                      ? 'bg-slate-950 border border-slate-800 text-slate-100 shadow-inner shadow-black/40' 
-                      : 'text-[#D4AF37] hover:text-[#D4AF37]/85 hover:bg-slate-950/20'
+                      ? 'bg-slate-850/80 border border-gold/50 text-white shadow-[0_0_15px_rgba(212,175,55,0.2),inset_0_0_10px_rgba(212,175,55,0.1)]' 
+                      : 'text-gold border border-transparent hover:text-gold-dark hover:bg-slate-950/40 hover:border-slate-800/50'
                   }`}
                 >
-                  <Icon className={`h-4 w-4 shrink-0 ${activeTab === tab.id ? 'text-[#D4AF37]' : 'text-[#8A6D3B]'}`} />
-                  {tab.label}
+                  {activeTab === tab.id && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gold shadow-[0_0_10px_#D4AF37]" />
+                  )}
+                  <Icon className={`h-4 w-4 shrink-0 z-10 ${activeTab === tab.id ? 'text-gold drop-shadow-[0_0_5px_#D4AF37]' : 'text-gold-dark'}`} />
+                  <span className="z-10 tracking-wide">{tab.label}</span>
                 </button>
               );
             })}

@@ -3,11 +3,7 @@ import path from 'path';
 import multer from 'multer';
 import crypto from 'crypto';
 import { createServer as createViteServer } from 'vite';
-import { createRequire } from 'module';
-
-const require = createRequire(import.meta.url);
-const pdfModule = require('pdf-parse');
-const pdf = typeof pdfModule === 'function' ? pdfModule : (pdfModule.default || pdfModule);
+import { PDFParse, VerbosityLevel } from 'pdf-parse';
 
 import { db } from './src/server/db.js';
 import * as ai from './src/server/gemini.js';
@@ -20,34 +16,27 @@ function computeHash(content: string | Buffer): string {
   return crypto.createHash('md5').update(content).digest('hex');
 }
 
-// PDF page-by-page text parser using pdf-parse hook
+// PDF page-by-page text parser using pdf-parse v2 PDFParse class
 async function parsePdfPages(buffer: Buffer): Promise<Array<{ page: number; text: string }>> {
   const pages: Array<{ page: number; text: string }> = [];
-  
-  const options = {
-    pagerender: function(pageData: any) {
-      return pageData.getTextContent().then(function(textContent: any) {
-        let lastY = '';
-        let text = '';
-        for (const item of textContent.items) {
-          if (lastY === item.transform[5] || !lastY) {
-            text += item.str;
-          } else {
-            text += '\n' + item.str;
-          }
-          lastY = item.transform[5];
-        }
-        pages.push({
-          page: pageData.pageIndex + 1,
-          text: text
-        });
-        return text;
-      });
-    }
-  };
 
-  await pdf(buffer, options);
-  pages.sort((a, b) => a.page - b.page);
+  const parser = new PDFParse({ data: buffer, verbosity: VerbosityLevel.ERRORS });
+  await parser.load();
+  const info = await parser.getInfo();
+  const numPages = info.numPages || 0;
+
+  for (let i = 1; i <= numPages; i++) {
+    try {
+      const text = await parser.getPageText(i);
+      if (text && text.trim().length > 0) {
+        pages.push({ page: i, text: text.trim() });
+      }
+    } catch (e) {
+      console.warn(`Failed to extract text from page ${i}, skipping.`);
+    }
+  }
+
+  await parser.destroy();
   return pages;
 }
 
@@ -429,8 +418,20 @@ app.use(express.json({ limit: '10mb' }));
 
   // 8. Spaced-Repetition Flashcards Endpoints
   app.get('/api/flashcards', (req, res) => {
-    const { topicId } = req.query;
-    res.json(db.getFlashcards(topicId as string));
+    const { topicId, subjectId } = req.query;
+    if (topicId) {
+      res.json(db.getFlashcards(topicId as string));
+    } else if (subjectId) {
+      // Resolve all topics under this subject's modules
+      const mods = db.getModules(subjectId as string);
+      const modIds = mods.map(m => m.id);
+      const subjectTopics = db.getTopics().filter(t => modIds.includes(t.module_id));
+      const topicIds = subjectTopics.map(t => t.id);
+      const allCards = db.getFlashcards();
+      res.json(allCards.filter(fc => topicIds.includes(fc.topic_id)));
+    } else {
+      res.json(db.getFlashcards());
+    }
   });
 
   app.post('/api/flashcards', (req, res) => {
@@ -1119,3 +1120,5 @@ app.use(express.json({ limit: '10mb' }));
       console.log(`Tattva full-stack engine booted successfully on port ${PORT}`);
     });
   }
+  
+  export default app;

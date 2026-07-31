@@ -99,7 +99,32 @@
       "last_updated": "2026-07-22T17:37:00.047Z"
     }
   ],
-  "documents": [],
+  "documents": [
+    {
+      "id": "doc-1785505929474",
+      "subject_id": "sub-cn",
+      "filename": "mathsnotes_24.pdf",
+      "source_type": "upload",
+      "uploaded_at": "2026-07-31T13:52:09.474Z",
+      "content_hash": "6a5ef0654d7c48eef4a1a8f2aa379fcf"
+    },
+    {
+      "id": "doc-1785505996989",
+      "subject_id": "sub-db",
+      "filename": "OS Questions to Read.pdf",
+      "source_type": "upload",
+      "uploaded_at": "2026-07-31T13:53:16.989Z",
+      "content_hash": "461fd0c5b6037fc41f1b25d3f11705e4"
+    },
+    {
+      "id": "doc-1785507831326",
+      "subject_id": "sub-cn",
+      "filename": "OS Questions to Read.pdf",
+      "source_type": "upload",
+      "uploaded_at": "2026-07-31T14:23:51.326Z",
+      "content_hash": "461fd0c5b6037fc41f1b25d3f11705e4"
+    }
+  ],
   "chunks": [],
   "notes": [
     {
@@ -120,6 +145,19 @@
       "confidence": "grounded",
       "generated_at": "2026-07-22T17:47:11.472Z",
       "summary_md": "- **Core Takeaway**: This is a key takeaway from the note about core principles.\n- **Significance**: Exam preparation requires focusing on key highlighted definitions.\n- **Application**: Practical questions often require executing specific algorithms outlined in the syllabus."
+    },
+    {
+      "id": "note-1785522113999-xfrh6",
+      "topic_id": "top-cn-transmission",
+      "depth": "6mark",
+      "content_md": "### Transmission Media & Nyquist Theorem (6mark Study Note)\n\nThis is a high-quality simulated study note for **Transmission Media & Nyquist Theorem** (Computer Networks Module 1).\n\n- **Core definition**: Engineering concepts surrounding this field cover structural behaviors and protocol mechanisms.\n- **Depth details**: At 6mark depth, we provide essential definitions, illustrations, and formulas.\n\n*(Source: Simulated_Syllabus.pdf, p.1)*\n\nCONFIDENCE: grounded\n\n### Process Flow Visualizer\n\n```mermaid\ngraph TD\n    A[Start Process] --> B[Execute Algorithms]\n    B --> C{Decision Path}\n    C -->|Success| D[Final Output]\n    C -->|Failure| E[Review Logs]\n```\n",
+      "confidence": "grounded",
+      "version": 1,
+      "generated_at": "2026-07-31T18:21:53.999Z",
+      "tags": [
+        "Data Structures",
+        "Algorithms"
+      ]
     }
   ],
   "pyqs": [
@@ -203,14 +241,32 @@
       "topic_id": "top-db-er",
       "marks": 2,
       "difficulty": "easy"
+    },
+    {
+      "id": "pyq-1785522028288",
+      "subject_id": "sub-cn",
+      "year": 2025,
+      "question_text": "Differentiate between vector mapping and vector scheduling",
+      "topic_id": "top-cn-routing",
+      "marks": 10,
+      "difficulty": "medium"
+    },
+    {
+      "id": "pyq-1785522068464",
+      "subject_id": "sub-cn",
+      "year": 2025,
+      "question_text": "Differentiate between vector mapping and vector scheduling\n",
+      "topic_id": "top-cn-routing",
+      "marks": 10,
+      "difficulty": "medium"
     }
   ],
   "topic_importance": [
     {
       "topic_id": "top-cn-routing",
-      "frequency_count": 2,
-      "difficulty_avg": 2.5,
-      "last_recalculated": "2026-07-22T17:37:00.048Z"
+      "frequency_count": 4,
+      "difficulty_avg": 2.25,
+      "last_recalculated": "2026-07-31T18:21:08.464Z"
     },
     {
       "topic_id": "top-cn-framing",
@@ -249,18 +305,18 @@
       "topic_id": "top-cn-routing",
       "question": "What algorithm is used in Link State Routing to calculate the shortest path?",
       "answer": "Dijkstra's Algorithm, which creates a shortest path tree by scanning global topological data flooded via Link State Packets.",
-      "ease_factor": 2.5,
-      "next_review_at": "2026-07-22T17:37:00.048Z",
+      "ease_factor": 2.36,
+      "next_review_at": "2026-08-01T18:21:17.646Z",
       "interval_days": 1,
-      "repetitions": 0
+      "repetitions": 1
     },
     {
       "id": "fc-2",
       "topic_id": "top-cn-routing",
       "question": "What major convergence routing error occurs in Distance Vector Routing?",
       "answer": "The Count-to-Infinity problem, where routers repeatedly increments cost hops in a loop when a link goes completely down.",
-      "ease_factor": 2.5,
-      "next_review_at": "2026-07-22T17:37:00.048Z",
+      "ease_factor": 2.1799999999999997,
+      "next_review_at": "2026-08-01T18:21:21.418Z",
       "interval_days": 1,
       "repetitions": 0
     },
@@ -272,6 +328,16 @@
       "ease_factor": 2.5,
       "next_review_at": "2026-07-22T17:37:00.048Z",
       "interval_days": 1,
+      "repetitions": 0
+    },
+    {
+      "id": "fc-1785522122556-zo67d",
+      "topic_id": "top-cn-transmission",
+      "question": "What is the primary objective of Distance Vector Routing?",
+      "answer": "undefined *(Citation: CN_Syllabus.pdf)*",
+      "ease_factor": 2.5,
+      "next_review_at": "2026-07-31T18:22:02.556Z",
+      "interval_days": 0,
       "repetitions": 0
     }
   ],
