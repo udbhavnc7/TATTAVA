@@ -18,30 +18,20 @@ function computeHash(content: string | Buffer): string {
 
 // PDF page-by-page text parser using pdf-parse v2 PDFParse class
 async function parsePdfPages(buffer: Buffer): Promise<Array<{ page: number; text: string }>> {
-  const pages: Array<{ page: number; text: string }> = [];
-
   const parser = new PDFParse({ data: buffer, verbosity: VerbosityLevel.ERRORS });
-  await parser.load();
-  const info = await parser.getInfo();
-  const numPages = info.numPages || 0;
 
-  for (let i = 1; i <= numPages; i++) {
-    try {
-      const text = await parser.getPageText(i);
-      if (text && text.trim().length > 0) {
-        pages.push({ page: i, text: text.trim() });
-      }
-    } catch (e) {
-      console.warn(`Failed to extract text from page ${i}, skipping.`);
-    }
+  try {
+    const textResult = await parser.getText();
+    return textResult.pages
+      .filter((p) => p.text && p.text.trim().length > 0)
+      .map((p) => ({ page: p.num, text: p.text.trim() }));
+  } finally {
+    await parser.destroy();
   }
-
-  await parser.destroy();
-  return pages;
 }
 
 export const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json({ limit: '10mb' }));
 
