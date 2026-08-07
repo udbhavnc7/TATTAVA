@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Brain, Star, CheckCircle, RefreshCw, HelpCircle, Layers, ArrowRight, FileSpreadsheet } from 'lucide-react';
 import { Subject, Flashcard, Topic } from '../types';
 import { exportFlashcardsToAnkiCSV } from '../utils/exportManager';
+import TiltCard from './TiltCard';
 
 interface FlashcardsReviewProps {
   subjects: Subject[];
@@ -322,7 +323,7 @@ export default function FlashcardsReview({ subjects, selectedSubject }: Flashcar
       <div className="xl:col-span-2 space-y-6">
         
         {/* Active Spaced-Repetition Review Arena */}
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl min-h-[450px] flex flex-col justify-between">
+        <TiltCard className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl min-h-[450px] flex flex-col justify-between" intensity={5}>
           
           <div className="flex items-center justify-between border-b border-slate-800 pb-3 font-mono text-xs text-slate-400">
             <span>SPACED REPETITION STUDY CENTER</span>
@@ -451,7 +452,7 @@ export default function FlashcardsReview({ subjects, selectedSubject }: Flashcar
             <strong>Calibrated with SuperMemo-2 Spaced scheduling:</strong> Scores &lt; 3 trigger same-day reviews. Perfect recall scores (5) adjust multiplier weights (ease_factor) to trigger cards weeks in advance, optimizing memory traces.
           </div>
 
-        </div>
+        </TiltCard>
 
       </div>
 

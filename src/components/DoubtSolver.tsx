@@ -4,6 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { Subject } from '../types';
+import TiltCard from './TiltCard';
 
 interface Message {
   id: string;
@@ -135,7 +136,7 @@ export default function DoubtSolver({ subjects, selectedSubject }: DoubtSolverPr
       </div>
 
       {/* 2. Main Chat Workspace (3/4 space) */}
-      <div className="xl:col-span-3 flex flex-col bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden h-full">
+      <TiltCard className="xl:col-span-3 flex flex-col bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden h-full" intensity={4}>
         
         {/* Chat Messages Log */}
         <div className="flex-1 overflow-y-auto p-5 space-y-4 scroll-smooth">
@@ -231,7 +232,7 @@ export default function DoubtSolver({ subjects, selectedSubject }: DoubtSolverPr
           </button>
         </form>
 
-      </div>
+      </TiltCard>
 
     </div>
   );

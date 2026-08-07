@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
+import { getAuth, signInWithPopup, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
@@ -91,12 +91,20 @@ export const resolveRedirectSignIn = async (): Promise<{ user: User; accessToken
   }
 };
 
-// Sign in with Google. Uses full-page redirect instead of a popup window.
+// Sign in with Google. Uses a popup window (more reliable than full-page
+// redirect for localhost + custom domains, and errors surface immediately
+// instead of after a page round-trip).
 export const googleSignIn = async (): Promise<void> => {
   try {
-    await signInWithRedirect(auth, provider);
+    const result = await signInWithPopup(auth, provider);
+    const credential = GoogleAuthProvider.credentialFromResult(result);
+    if (credential?.accessToken) {
+      cachedAccessToken = credential.accessToken;
+      persistToken(cachedAccessToken);
+      console.log('[Auth] Popup sign-in success. Token captured.');
+    }
   } catch (error: any) {
-    console.error('Sign in error:', error);
+    console.error('[Auth] Sign in error:', error);
     throw error;
   }
 };

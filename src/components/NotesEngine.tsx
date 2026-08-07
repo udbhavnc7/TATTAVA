@@ -13,6 +13,7 @@ import { Subject, Module, Topic, Note } from '../types';
 import { generateMermaidDiagram } from '../utils/diagramGenerator';
 import { exportNoteToMarkdown, exportFlashcardsToAnkiCSV, exportNoteToPDF } from '../utils/exportManager';
 import { saveNotesToCache, saveNoteToCache, getNoteFromCache, getCachedTopicIdsMap } from '../utils/indexedDB';
+import TiltCard from './TiltCard';
 
 // A highly reliable React wrapper component that renders Mermaid charts asynchronously
 function Mermaid({ chart }: { chart: string }) {
@@ -967,7 +968,7 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
           )}
 
           {/* Core Notes Viewer Area */}
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl min-h-[500px] shadow-xl space-y-6 relative">
+          <TiltCard className="bg-slate-900 border border-slate-800 p-6 rounded-2xl min-h-[500px] shadow-xl space-y-6 relative" intensity={5}>
             
             {/* Subtle Scroll Progress Bar at the top of notes display area */}
             {note && !generating && (
@@ -1389,7 +1390,7 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
               </div>
             )}
 
-          </div>
+          </TiltCard>
 
         </div>
 

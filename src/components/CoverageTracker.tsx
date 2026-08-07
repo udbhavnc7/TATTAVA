@@ -388,10 +388,10 @@ export default function CoverageTracker({
           {/* Syllabus Progress Card (Left Column) */}
           <div className="lg:col-span-1 space-y-6">
             <TiltCard className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 shadow-lg">
-              <h3 className="text-sm font-mono text-slate-400 uppercase tracking-wider">Overall Syllabus Coverage</h3>
+              <h3 className="text-sm font-mono text-slate-400 uppercase tracking-wider panel-pop">Overall Syllabus Coverage</h3>
               
               {/* Radial Circle */}
-              <div className="relative w-40 h-40 flex items-center justify-center">
+              <div className="relative w-40 h-40 flex items-center justify-center panel-pop">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="40" stroke="rgba(30, 41, 59, 1)" strokeWidth="8" fill="transparent" />
                   <circle 

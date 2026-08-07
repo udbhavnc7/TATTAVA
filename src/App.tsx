@@ -17,14 +17,13 @@ const FlashcardsReview = lazy(() => import('./components/FlashcardsReview'));
 const DoubtSolver = lazy(() => import('./components/DoubtSolver'));
 const FormulaSheet = lazy(() => import('./components/FormulaSheet'));
 import WorkspaceHub from './components/WorkspaceHub';
-import Login from './components/Login';
 import ImmersiveBackground from './components/ImmersiveBackground';
 
 export default function App() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [activeTab, setActiveTab] = useState<'coverage' | 'notes' | 'pyqs' | 'flashcards' | 'doubt' | 'formulas' | 'workspace'>('coverage');
-  const [isDemoLoggedIn, setIsDemoLoggedIn] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Theme Management
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -109,6 +108,7 @@ export default function App() {
 
   const handleLogin = async () => {
     try {
+      setAuthError(null);
       console.log('[Auth] Initiating Google sign-in redirect...');
       await googleSignIn();
       // signInWithRedirect returns immediately — the page will navigate away
@@ -116,6 +116,16 @@ export default function App() {
       console.error('[Auth] Login failed:', err);
       setUser(null);
       setAccessToken(null);
+      const code = err?.code || err?.message || '';
+      let msg = 'Google sign-in failed. Please try again.';
+      if (code.includes('popup-closed') || code.includes('cancelled')) {
+        msg = 'Sign-in was cancelled. No problem — you can keep using Tattva without a Google account.';
+      } else if (code.includes('unauthorized-domain') || code.includes('400')) {
+        msg = 'This domain is not authorized in Firebase. Check the Auth authorized-domains list.';
+      } else if (code.includes('user-cancelled') || code.includes('admin-restricted')) {
+        msg = 'Google OAuth blocked sign-in (Testing mode restricts who may log in). Publish the OAuth app or add your account as a test user in Google Cloud Console.';
+      }
+      setAuthError(msg);
     }
   };
 
@@ -129,14 +139,20 @@ export default function App() {
     }
   };
 
-  if (!isDemoLoggedIn) {
-    return <Login onLogin={() => setIsDemoLoggedIn(true)} onGoogleLogin={handleLogin} />;
-  }
+  // Anyone can use Tattva — no login wall. Google Workspace sync is optional.
+  // The immersive welcome/landing experience is reachable from the sidebar
+  // (Google Workspace tab) and via the "Link Google" widget below.
 
   return (
     <div id="tattva-app" className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col md:flex-row">
       
       <ImmersiveBackground />
+      
+      {/* Floating 3D depth orbs */}
+      <div className="orb orb-cyan" style={{ width: 380, height: 380, top: '6%', left: '22%' }} />
+      <div className="orb orb-purple" style={{ width: 460, height: 460, bottom: '-8%', right: '12%' }} />
+      <div className="orb orb-cyan" style={{ width: 220, height: 220, top: '40%', right: '4%', opacity: 0.25 }} />
+      <div className="orb orb-purple" style={{ width: 260, height: 260, bottom: '15%', left: '2%' }} />
       
       {/* 1. SIDEBAR NAVIGATION */}
       <aside className="w-full md:w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0">
@@ -256,6 +272,9 @@ export default function App() {
                   Link Google
                 </button>
               </div>
+              {authError && (
+                <p className="text-[10px] leading-snug text-amber-300/90 font-mono pt-1">⚠ {authError}</p>
+              )}
             </div>
           )}
 

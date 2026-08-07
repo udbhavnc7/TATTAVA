@@ -124,11 +124,75 @@ html.light body {
   -webkit-backdrop-filter: blur(12px);
 }
 
-/* Give buttons and cards a sleek glowing edge */
+/* Global 3D scene — every panel lives on a shared perspective plane */
+#tattva-app main {
+  perspective: 1600px;
+  perspective-origin: 50% 0%;
+}
+
+/* Give buttons and cards a sleek glowing edge + layered 3D depth.
+   Applied to every panel app-wide so the whole UI shares the same
+   dimensional, holographic language. */
 .bg-slate-900, .bg-slate-950 {
-  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5), 0 4px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5),
+              0 4px 30px rgba(0, 0, 0, 0.1),
+              0 0 0 1px rgba(0, 240, 255, 0.06),
+              0 12px 40px -12px rgba(181, 60, 255, 0.25);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  transform-style: preserve-3d;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Hover lift + neon edge on any card, app-wide */
+.rounded-xl:hover, .rounded-2xl:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.45),
+              0 8px 40px rgba(0, 0, 0, 0.2),
+              0 0 0 1px rgba(0, 240, 255, 0.25),
+              0 16px 60px -12px rgba(181, 60, 255, 0.45),
+              0 0 30px rgba(0, 240, 255, 0.15);
+}
+
+/* Floating depth layers — decorative orbs that drift in 3D space behind content */
+@keyframes orb-float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  33% { transform: translate3d(40px, -30px, 60px) scale(1.08); }
+  66% { transform: translate3d(-30px, 20px, 40px) scale(0.95); }
+}
+
+.orb {
+  position: fixed;
+  border-radius: 9999px;
+  filter: blur(90px);
+  pointer-events: none;
+  opacity: 0.35;
+  will-change: transform;
+  z-index: 0;
+}
+
+.orb-cyan {
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.9), transparent 70%);
+  animation: orb-float 14s ease-in-out infinite;
+}
+
+.orb-purple {
+  background: radial-gradient(circle, rgba(181, 60, 255, 0.9), transparent 70%);
+  animation: orb-float 18s ease-in-out infinite reverse;
+}
+
+html.light .orb { opacity: 0.18; }
+
+/* 3D child layers that pop out of tilted cards */
+.panel-pop {
+  transform: translateZ(24px);
+  transform-style: preserve-3d;
+}
+
+.panel-pop-lg {
+  transform: translateZ(48px);
+  transform-style: preserve-3d;
 }
 
 /* Custom Mermaid inline style rules */

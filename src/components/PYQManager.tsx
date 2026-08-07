@@ -3,6 +3,7 @@ import {
   FileText, Plus, RefreshCw, Play, Printer, Sparkles, Brain, GraduationCap 
 } from 'lucide-react';
 import { Subject, PYQ, Topic, TopicImportance } from '../types';
+import TiltCard from './TiltCard';
 
 interface PYQManagerProps {
   subjects: Subject[];
@@ -298,7 +299,7 @@ export default function PYQManager({ subjects, selectedSubject }: PYQManagerProp
       <div className="xl:col-span-2 space-y-6">
         
         {/* Mock Exam Paper Assembler Workspace */}
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-6">
+        <TiltCard className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl space-y-6" intensity={5}>
           
           <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between border-b border-slate-800/80 pb-4 gap-4">
             <div className="space-y-1">
@@ -468,7 +469,7 @@ export default function PYQManager({ subjects, selectedSubject }: PYQManagerProp
             </div>
           )}
 
-        </div>
+        </TiltCard>
 
         {/* past questions library */}
         <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-lg space-y-4">
