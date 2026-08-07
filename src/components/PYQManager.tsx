@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  FileText, Plus, RefreshCw, Award, Filter, Play, CheckCircle2, 
-  HelpCircle, Printer, Sparkles, Brain, GraduationCap 
+  FileText, Plus, RefreshCw, Play, Printer, Sparkles, Brain, GraduationCap 
 } from 'lucide-react';
 import { Subject, PYQ, Topic, TopicImportance } from '../types';
 
@@ -141,7 +140,12 @@ export default function PYQManager({ subjects, selectedSubject }: PYQManagerProp
         const data = await res.json();
         setMockPaper(data);
       } else {
-        alert(await res.text());
+        let message = 'Failed to assemble mock paper.';
+        try {
+          const errorData = await res.json();
+          if (errorData?.error) message = errorData.error;
+        } catch { /* non-JSON error body */ }
+        alert(message);
       }
     } catch (e) {
       console.error(e);
@@ -427,7 +431,7 @@ export default function PYQManager({ subjects, selectedSubject }: PYQManagerProp
                     <div className="space-y-3 font-sans">
                       {mockPaper.questions.filter(q => q.marks === 6).map((q, idx) => (
                         <div key={q.id} className="flex justify-between items-start gap-4 text-xs">
-                          <span>Q{idx+1}. {q.question_text}</span>
+                          <span>Q{mockPaper.questions.filter(q2 => q2.marks === 2).length + idx + 1}. {q.question_text}</span>
                           <span className="font-bold text-slate-700 font-mono shrink-0">[6 Marks]</span>
                         </div>
                       ))}
@@ -442,7 +446,7 @@ export default function PYQManager({ subjects, selectedSubject }: PYQManagerProp
                     <div className="space-y-3 font-sans">
                       {mockPaper.questions.filter(q => q.marks === 10).map((q, idx) => (
                         <div key={q.id} className="flex justify-between items-start gap-4 text-xs">
-                          <span>Q{idx+1}. {q.question_text}</span>
+                          <span>Q{mockPaper.questions.filter(q2 => q2.marks === 2 || q2.marks === 6).length + idx + 1}. {q.question_text}</span>
                           <span className="font-bold text-slate-700 font-mono shrink-0">[10 Marks]</span>
                         </div>
                       ))}

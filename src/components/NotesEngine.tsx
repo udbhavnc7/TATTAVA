@@ -91,6 +91,7 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
   const [generatingDiagram, setGeneratingDiagram] = useState(false);
   const [copied, setCopied] = useState(false);
   const [autoFcStatus, setAutoFcStatus] = useState<'idle' | 'generating' | 'success'>('idle');
+  const [autoFcError, setAutoFcError] = useState<string | null>(null);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
   const [exportingAnki, setExportingAnki] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -111,6 +112,7 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
 
   const mermaidRef = useRef<HTMLDivElement>(null);
   const notesContentRef = useRef<HTMLDivElement>(null);
+  const draftScopeRef = useRef<string | null>(null);
   const [scrollProgress, setScrollProgress] = useState(0);
 
   // Offline-first caching states
@@ -233,7 +235,7 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
   // C9. Summarize Note Toggle Effect
   useEffect(() => {
     const fetchSummaryIfNeeded = async () => {
-      if (!summarizeEnabled || !note || note.summary_md || isOfflineLoaded || !isOnline) return;
+      if (!summarizeEnabled || !note || !activeTopic || note.summary_md || isOfflineLoaded || !isOnline) return;
       
       setSummarizing(true);
       try {
@@ -280,19 +282,21 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
 
   // Auto-save editContent to localStorage as draft
   useEffect(() => {
-    if (isEditing && activeTopic) {
-      const draftKey = `tattva_draft_${activeTopic.id}_${depth}`;
-      if (editContent) {
-        localStorage.setItem(draftKey, editContent);
-        setHasDraft(true);
-        setDraftContent(editContent);
-      } else {
-        localStorage.removeItem(draftKey);
-        setHasDraft(false);
-        setDraftContent('');
-      }
+    const scopeKey = activeTopic ? `${activeTopic.id}_${depth}` : null;
+    if (scopeKey !== draftScopeRef.current) {
+      draftScopeRef.current = scopeKey;
+      return;
     }
-  }, [editContent, isEditing, activeTopic, depth]);
+    if (isEditing && activeTopic && editContent && editContent !== note?.content_md) {
+      localStorage.setItem(`tattva_draft_${activeTopic.id}_${depth}`, editContent);
+      setHasDraft(true);
+      setDraftContent(editContent);
+    } else if (isEditing && activeTopic && (!editContent || editContent === note?.content_md)) {
+      localStorage.removeItem(`tattva_draft_${activeTopic.id}_${depth}`);
+      setHasDraft(false);
+      setDraftContent('');
+    }
+  }, [editContent, isEditing, activeTopic, depth, note?.content_md]);
 
   const handleSaveNote = async () => {
     if (!activeTopic) return;
@@ -374,9 +378,7 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
       const res = await fetch(`/api/modules?subjectId=${selectedSubject.id}`);
       const data = await res.json();
       setModules(data);
-      if (data.length > 0) {
-        setActiveModule(data[0]);
-      }
+      setActiveModule(data.length > 0 ? data[0] : null);
     } catch (e) {
       console.error(e);
     }
@@ -403,6 +405,8 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
     
     // Reset editing state and check for local draft
     setIsEditing(false);
+    setEditContent('');
+    setNote(null);
     const draftKey = `tattva_draft_${activeTopic.id}_${depth}`;
     const savedDraft = localStorage.getItem(draftKey);
     if (savedDraft) {
@@ -458,6 +462,16 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
           depth
         })
       });
+      if (!res.ok) {
+        let message = `Generation failed (HTTP ${res.status})`;
+        try {
+          const errorBody = await res.json();
+          if (errorBody?.error) message = errorBody.error;
+        } catch {
+          // non-JSON error body
+        }
+        throw new Error(message);
+      }
       const data = await res.json();
       setNote(data.note);
       setUnsupportedSentences(data.unsupported_sentences || []);
@@ -478,6 +492,7 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
   const handleAutoGenerateFlashcards = async () => {
     if (!activeTopic || !note) return;
     setAutoFcStatus('generating');
+    setAutoFcError(null);
     try {
       const res = await fetch('/api/flashcards/auto-generate', {
         method: 'POST',
@@ -490,9 +505,19 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
       if (res.ok) {
         setAutoFcStatus('success');
         setTimeout(() => setAutoFcStatus('idle'), 3000);
+      } else {
+        let message = 'Failed to auto-generate flashcards.';
+        try {
+          const errorBody = await res.json();
+          if (errorBody?.error) message = errorBody.error;
+        } catch { /* non-JSON error body */ }
+        console.error(message);
+        setAutoFcError(message);
+        setAutoFcStatus('idle');
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      setAutoFcError(e?.message || 'Flashcard generation failed.');
       setAutoFcStatus('idle');
     }
   };
@@ -651,13 +676,13 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
     if (!note || !activeTopic) return;
     setGeneratingDiagram(true);
     try {
+      if (/### Process Flow Visualizer/.test(note.content_md)) {
+        return;
+      }
       const diagramCode = await generateMermaidDiagram(note.content_md);
       
-      let cleanedContent = note.content_md;
-      
-      // If there is already a process flow visualizer header, let's append neatly, or just append a new section
       const appendMarkdown = `\n\n### Process Flow Visualizer\n\n\`\`\`mermaid\n${diagramCode}\n\`\`\`\n`;
-      const newContent = cleanedContent + appendMarkdown;
+      const newContent = note.content_md + appendMarkdown;
       
       const response = await fetch('/api/notes/update', {
         method: 'POST',
@@ -676,7 +701,7 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
         const updatedNote = await response.json();
         setNote(updatedNote);
       } else {
-        setNote(prev => prev ? { ...prev, content_md: newContent } : null);
+        throw new Error(`Failed to save diagram (HTTP ${response.status})`);
       }
     } catch (err) {
       console.error("Failed to generate or save diagram:", err);
@@ -1031,17 +1056,6 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
                   <div className="flex items-center gap-2.5">
                     <button
                       onClick={() => {
-                        setEditContent(note?.content_md || '');
-                        setIsEditing(false);
-                      }}
-                      className="px-4 py-2 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 rounded-lg text-xs font-mono font-semibold transition-all flex items-center gap-1.5"
-                    >
-                      <XCircle className="h-4 w-4 text-rose-500" />
-                      <span>Cancel</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => {
                         const draftKey = `tattva_draft_${activeTopic.id}_${depth}`;
                         localStorage.removeItem(draftKey);
                         setHasDraft(false);
@@ -1297,6 +1311,9 @@ export default function NotesEngine({ subjects, selectedSubject }: NotesEnginePr
                     <div className="space-y-1">
                       <p className="text-xs font-mono font-semibold text-white">Generate Spaced Repetition flashcards</p>
                       <p className="text-[10px] text-slate-400">Instantly convert these RAG study notes into flashcards with SM-2 scheduling</p>
+                      {autoFcError && (
+                        <p className="text-[10px] font-mono text-rose-400 pt-1">{autoFcError}</p>
+                      )}
                     </div>
                     <button
                       onClick={handleAutoGenerateFlashcards}

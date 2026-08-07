@@ -3,6 +3,7 @@ import { FileText, RefreshCw, Sparkles, Brain, Download, HelpCircle } from 'luci
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
+import TiltCard from './TiltCard';
 import { Subject } from '../types';
 import { exportFormulaSheetToMarkdown } from '../utils/exportManager';
 
@@ -79,7 +80,7 @@ export default function FormulaSheet({ subjects, selectedSubject }: FormulaSheet
       {/* 2. Main Formula Table display (3/4 space) */}
       <div className="xl:col-span-3 space-y-4">
         
-        <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl min-h-[500px]">
+        <TiltCard className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl min-h-[500px]">
           {loading ? (
             /* SHIMMER LOADING EFFECT FOR EQUATION EXTRACTION */
             <div className="space-y-6">
@@ -139,7 +140,7 @@ export default function FormulaSheet({ subjects, selectedSubject }: FormulaSheet
               Select a subject to begin scanning.
             </div>
           )}
-        </div>
+        </TiltCard>
 
       </div>
 

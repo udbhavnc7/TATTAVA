@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  Cloud, BookOpen, GraduationCap, CheckCircle2, 
-  RefreshCw, FileText, ArrowRight, Check, AlertCircle, 
+  Cloud, BookOpen, GraduationCap, 
+  RefreshCw, FileText, ArrowRight, AlertCircle, 
   ExternalLink, UserCheck, ShieldAlert, Link2, FolderPlus, 
-  FolderSymlink, Trash2, FolderOpen, CheckSquare, FileUp
+  FolderSymlink, Trash2, FolderOpen
 } from 'lucide-react';
 import { Subject } from '../types';
 import { ClassroomIntegrationService } from '../services/ClassroomIntegrationService';
+import TiltCard from './TiltCard';
 
 interface WorkspaceHubProps {
   subjects: Subject[];
@@ -68,8 +69,8 @@ export default function WorkspaceHub({
   const [importSubjectId, setImportSubjectId] = useState<string>('');
 
   // Sync Status States
-  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(new Date());
-  const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'success' | 'failed'>('success');
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+  const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'success' | 'failed'>('idle');
 
   // Classroom States
   const [courses, setCourses] = useState<ClassroomCourse[]>([]);
@@ -110,15 +111,14 @@ export default function WorkspaceHub({
       setMappings(data);
     } catch (e) {
       console.error('Failed to fetch mappings:', e);
+      throw e;
     } finally {
       setLoadingMappings(false);
     }
   };
 
   useEffect(() => {
-    if (user) {
-      fetchMappings();
-    } else {
+    if (!user) {
       setMappings([]);
     }
   }, [user]);
@@ -230,24 +230,36 @@ export default function WorkspaceHub({
     try {
       const res = await fetch('/api/drive/ingest', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
         body: JSON.stringify({
           fileId,
           filename,
           mimeType,
-          subject_id: mapping.subject_id,
-          accessToken
+          subject_id: mapping.subject_id
         })
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const raw = await res.text();
+        let message = `Sync failed (HTTP ${res.status})`;
+        try {
+          const errBody = JSON.parse(raw);
+          if (errBody?.error) message = errBody.error;
+        } catch {
+          // non-JSON error body
+        }
+        throw new Error(message);
+      }
       const data = await res.json();
 
       setImportLogs(prev => [
         { name: filename, type: 'Sync Folder File', time: new Date().toLocaleTimeString(), status: 'success' },
         ...prev
       ]);
-      setIngestionStatus(`Success! Synced "${filename}" and created ${data.chunks_created} vector chunks.`);
+      setIngestionStatus(`Success! Synced "${filename}" and created ${data?.chunks_created ?? 0} vector chunks.`);
       onRefreshSubjects();
     } catch (err: any) {
       console.error(err);
@@ -291,7 +303,10 @@ export default function WorkspaceHub({
   // Fetch course materials when a course is selected
   useEffect(() => {
     if (selectedCourseId && accessToken) {
-      fetchCourseMaterials(selectedCourseId);
+      fetchCourseMaterials(selectedCourseId).catch((e) => {
+        console.error('Failed to load course materials:', e);
+        setCourseMaterials([]);
+      });
     } else {
       setCourseMaterials([]);
     }
@@ -302,11 +317,12 @@ export default function WorkspaceHub({
     try {
       const data = await classroomService.fetchCourses();
       setCourses(data);
-      if (data.length > 0) {
-        setSelectedCourseId(data[0].id);
-      }
+      setSelectedCourseId(prev =>
+        prev && data.some(c => c.id === prev) ? prev : (data.length > 0 ? data[0].id : '')
+      );
     } catch (e: any) {
       console.error('Failed to fetch Classroom courses:', e);
+      throw e;
     } finally {
       setLoadingCourses(false);
     }
@@ -319,6 +335,7 @@ export default function WorkspaceHub({
       setCourseMaterials(data);
     } catch (e: any) {
       console.error('Failed to fetch course materials:', e);
+      throw e;
     } finally {
       setLoadingMaterials(false);
     }
@@ -403,17 +420,29 @@ export default function WorkspaceHub({
     try {
       const res = await fetch('/api/drive/ingest', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
         body: JSON.stringify({
           fileId,
           filename,
           mimeType,
-          subject_id: importSubjectId,
-          accessToken
+          subject_id: importSubjectId
         })
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const raw = await res.text();
+        let message = `Import failed (HTTP ${res.status})`;
+        try {
+          const errBody = JSON.parse(raw);
+          if (errBody?.error) message = errBody.error;
+        } catch {
+          // non-JSON error body
+        }
+        throw new Error(message);
+      }
       const data = await res.json();
       
       // Log successful import
@@ -421,7 +450,7 @@ export default function WorkspaceHub({
         { name: filename, type: 'Drive File', time: new Date().toLocaleTimeString(), status: 'success' },
         ...prev
       ]);
-      setIngestionStatus(`Success! Ingested ${data.pages_processed} pages and created ${data.chunks_created} vectors.`);
+      setIngestionStatus(`Success! Ingested ${data?.pages_processed ?? 0} pages and created ${data?.chunks_created ?? 0} vectors.`);
       onRefreshSubjects();
     } catch (err: any) {
       console.error(err);
@@ -461,7 +490,17 @@ export default function WorkspaceHub({
         })
       });
 
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        const raw = await res.text();
+        let message = `Mapping failed (HTTP ${res.status})`;
+        try {
+          const errBody = JSON.parse(raw);
+          if (errBody?.error) message = errBody.error;
+        } catch {
+          // non-JSON error body
+        }
+        throw new Error(message);
+      }
       
       setImportLogs(prev => [
         { name: material.title, type: 'Classroom Assignment', time: new Date().toLocaleTimeString(), status: 'success' },
@@ -554,8 +593,8 @@ export default function WorkspaceHub({
 
       {!user ? (
         /* Landing/Auth Required State */
-        <div className="bg-slate-900 border border-slate-800/80 rounded-2xl p-8 md:p-12 text-center max-w-2xl mx-auto space-y-6 shadow-xl animate-fade-in">
-          <div className="w-16 h-16 bg-gradient-to-br from-[#D4AF37] to-amber-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-amber-500/10">
+        <TiltCard intensity={6} className="bg-slate-900 border border-slate-800/80 rounded-2xl p-8 md:p-12 text-center max-w-2xl mx-auto space-y-6 shadow-xl animate-fade-in">
+          <div className="w-16 h-16 bg-gradient-to-br from-[#D4AF37] to-amber-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-amber-500/10" style={{ transform: 'translateZ(30px)' }}>
             <Cloud className="h-8 w-8 text-black" />
           </div>
           
@@ -595,7 +634,7 @@ export default function WorkspaceHub({
               Sign in with Google
             </button>
           </div>
-        </div>
+        </TiltCard>
       ) : (
         /* Workspace Connected Workspace View */
         <div className="space-y-6 animate-fade-in">
@@ -616,8 +655,8 @@ export default function WorkspaceHub({
               <div>
                 <p className="text-[10px] font-mono text-slate-400 uppercase tracking-wider">Workspace Sync Status</p>
                 <div className="text-xs font-semibold text-white flex items-center gap-1.5 flex-wrap">
-                  <span className={syncState === 'syncing' ? 'text-blue-400' : syncState === 'success' ? 'text-emerald-400' : 'text-rose-400'}>
-                    {syncState === 'syncing' ? 'Syncing Classroom & Drive...' : syncState === 'success' ? 'Synchronized' : 'Sync Error'}
+                  <span className={syncState === 'syncing' ? 'text-blue-400' : syncState === 'success' ? 'text-emerald-400' : syncState === 'failed' ? 'text-rose-400' : 'text-slate-400'}>
+                    {syncState === 'syncing' ? 'Syncing Classroom & Drive...' : syncState === 'success' ? 'Synchronized' : syncState === 'failed' ? 'Sync Error' : 'Not Synced Yet'}
                   </span>
                   <span className="text-slate-500 font-normal hidden sm:inline">•</span>
                   <span className="text-slate-400 font-normal">Last Refreshed: {formatSyncTime(lastSyncTime)}</span>
@@ -627,7 +666,7 @@ export default function WorkspaceHub({
             <button
               onClick={handleManualSync}
               disabled={syncState === 'syncing'}
-              className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-950 hover:bg-slate-800 border border-slate-850 hover:border-slate-750 disabled:opacity-40 text-xs font-mono text-slate-300 hover:text-white rounded-lg transition-all active:scale-[0.98] cursor-pointer"
+              className="inline-flex items-center gap-2 px-3.5 py-2 bg-slate-950 hover:bg-slate-800 border border-slate-850 hover:border-slate-700 disabled:opacity-40 text-xs font-mono text-slate-300 hover:text-white rounded-lg transition-all active:scale-[0.98] cursor-pointer"
             >
               <RefreshCw className={`h-3 w-3 text-accent-teal ${syncState === 'syncing' ? 'animate-spin' : ''}`} />
               Manual Sync

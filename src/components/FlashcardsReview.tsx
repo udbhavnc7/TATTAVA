@@ -68,11 +68,18 @@ export default function FlashcardsReview({ subjects, selectedSubject }: Flashcar
   const fetchTopics = async () => {
     if (!selectedSubject) return;
     try {
-      const res = await fetch(`/api/topics`);
-      const data = await res.json();
-      setTopics(data);
+      // Scope topics to the selected subject's modules to prevent cross-subject
+      // deck contamination (wrong-subject cards were being added previously).
+      const modRes = await fetch(`/api/modules?subjectId=${selectedSubject.id}`);
+      const modules = await modRes.json();
+      const topicPromises = modules.map((m: any) =>
+        fetch(`/api/topics?moduleId=${m.id}`).then((r) => r.json())
+      );
+      const topicArrays = await Promise.all(topicPromises);
+      setTopics(topicArrays.flat());
     } catch (e) {
       console.error(e);
+      setTopics([]);
     }
   };
 
@@ -117,7 +124,10 @@ export default function FlashcardsReview({ subjects, selectedSubject }: Flashcar
         setAiErrorMessage("No study notes exist for this topic yet! Generate notes in the Notes Engine first.");
         return;
       }
-      const noteToUse = notesList.find((n: any) => n.depth === 'comprehensive') || notesList[0];
+      const DEPTH_PRIORITY = ['10mark', '6mark', '2mark'];
+      const noteToUse = DEPTH_PRIORITY
+        .map(d => notesList.find((n: any) => n.depth === d))
+        .find(Boolean) || notesList[0];
       if (!noteToUse || !noteToUse.content_md) {
         setAiErrorMessage("Note content is empty. Please regenerate notes.");
         return;

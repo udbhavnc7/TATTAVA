@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Brain, Bot, User, RefreshCw, Sparkles, BookOpen, ChevronRight } from 'lucide-react';
+import { Send, Brain, Bot, User, RefreshCw, Sparkles, BookOpen } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';

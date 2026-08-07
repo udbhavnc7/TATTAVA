@@ -1,8 +1,9 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import multer from 'multer';
 import crypto from 'crypto';
-import { createServer as createViteServer } from 'vite';
+
 import { PDFParse, VerbosityLevel } from 'pdf-parse';
 
 import { db } from './src/server/db.js';
@@ -772,7 +773,8 @@ app.use(express.json({ limit: '10mb' }));
   // Ingest a file directly from Google Drive using its fileId and user's accessToken
   app.post('/api/drive/ingest', async (req, res) => {
     try {
-      const { fileId, filename, mimeType, subject_id, accessToken } = req.body;
+      const { fileId, filename, mimeType, subject_id, accessToken: bodyAccessToken } = req.body;
+      const accessToken = (req.headers.authorization?.replace('Bearer ', '') || bodyAccessToken) as string | undefined;
 
       if (!fileId || !filename || !subject_id || !accessToken) {
         res.status(400).json({ error: 'fileId, filename, subject_id, and accessToken are required' });
@@ -1089,13 +1091,19 @@ app.use(express.json({ limit: '10mb' }));
 
   // --- VITE DEV / PRODUCTION INTEGRATION ---
   if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
-    // We use a dynamic import and IIFE for the dev server so we don't block the main export
+    // We use a dynamic import and IIFE for the dev server so we don't block the main export.
+    // Vite is only required at runtime in development, keeping the production bundle dependency-free.
     (async () => {
-      const vite = await createViteServer({
-        server: { middlewareMode: true },
-        appType: 'spa'
-      });
-      app.use(vite.middlewares);
+      try {
+        const { createServer: createViteServer } = await import('vite');
+        const vite = await createViteServer({
+          server: { middlewareMode: true },
+          appType: 'spa'
+        });
+        app.use(vite.middlewares);
+      } catch (e) {
+        console.error('Vite dev middleware failed to start:', e);
+      }
     })();
   } else if (!process.env.VERCEL) {
     const distPath = path.resolve(process.cwd(), 'dist');

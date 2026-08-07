@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
+import { getAuth, signInWithRedirect, getRedirectResult, GoogleAuthProvider, onAuthStateChanged, User } from 'firebase/auth';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
@@ -16,48 +16,88 @@ provider.addScope('https://www.googleapis.com/auth/classroom.courseworkmaterials
 provider.addScope('https://www.googleapis.com/auth/classroom.coursework.students.readonly');
 provider.addScope('https://www.googleapis.com/auth/classroom.topics.readonly');
 
-// Cache the access token in memory
-let cachedAccessToken: string | null = null;
-let isSigningIn = false;
+// Cache the access token in memory, backed by sessionStorage so it survives
+// page refreshes within the tab session. OAuth access tokens for these scopes
+// expire after roughly one hour, so an expired cached token is discarded.
+const TOKEN_STORAGE_KEY = 'tattva_gws_token';
+const TOKEN_TTL_MS = 55 * 60 * 1000;
 
-// Initialize auth state listener
+let cachedAccessToken: string | null = null;
+
+try {
+  const raw = sessionStorage.getItem(TOKEN_STORAGE_KEY);
+  if (raw) {
+    const parsed = JSON.parse(raw);
+    if (parsed?.token && Date.now() - parsed.savedAt < TOKEN_TTL_MS) {
+      cachedAccessToken = parsed.token;
+    } else {
+      sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+    }
+  }
+} catch {
+  // storage unavailable or corrupt — start with a fresh token
+}
+
+const persistToken = (token: string) => {
+  try {
+    sessionStorage.setItem(TOKEN_STORAGE_KEY, JSON.stringify({ token, savedAt: Date.now() }));
+  } catch {
+    // storage unavailable — keep token in memory only
+  }
+};
+
+// Initialize auth state listener.
+// This does NOT process redirect results — call resolveRedirectSignIn() once
+// at startup (before registering this listener) so the access token is cached
+// when onAuthStateChanged fires.
 export const initAuth = (
   onAuthSuccess?: (user: User, token: string) => void,
   onAuthFailure?: () => void
 ) => {
-  return onAuthStateChanged(auth, async (user: User | null) => {
-    if (user) {
-      if (cachedAccessToken) {
-        if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
-      } else {
-        // If we have a user but no cached token (e.g., page refresh),
-        // we prompt standard sign in to retrieve a fresh token.
-        if (onAuthFailure) onAuthFailure();
-      }
+  console.log('[Auth] Registering auth state listener. cachedAccessToken:', !!cachedAccessToken);
+  return onAuthStateChanged(auth, (user: User | null) => {
+    console.log('[Auth] onAuthStateChanged. user:', user?.email ?? 'null', 'hasToken:', !!cachedAccessToken);
+    if (user && cachedAccessToken) {
+      if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
     } else {
-      cachedAccessToken = null;
       if (onAuthFailure) onAuthFailure();
     }
   });
 };
 
-// Sign in with Google Popup
-export const googleSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
+// Resolve a pending Google redirect sign-in (returns from Google OAuth).
+// Call once at app startup so the access token is captured reliably.
+export const resolveRedirectSignIn = async (): Promise<{ user: User; accessToken: string } | null> => {
   try {
-    isSigningIn = true;
-    const result = await signInWithPopup(auth, provider);
+    console.log('[Auth] Checking for pending Google redirect result...');
+    const result = await getRedirectResult(auth);
+    if (!result) {
+      console.log('[Auth] No pending redirect result.');
+      return null;
+    }
+    console.log('[Auth] Got redirect result! User:', result.user.email);
     const credential = GoogleAuthProvider.credentialFromResult(result);
     if (!credential?.accessToken) {
-      throw new Error('Failed to get access token from Firebase Auth');
+      console.warn('[Auth] No access token in credential.');
+      return null;
     }
-
+    console.log('[Auth] Access token captured. Persisting...');
     cachedAccessToken = credential.accessToken;
+    persistToken(cachedAccessToken);
     return { user: result.user, accessToken: cachedAccessToken };
+  } catch (error) {
+    console.error('[Auth] Failed to resolve Google redirect sign-in:', error);
+    return null;
+  }
+};
+
+// Sign in with Google. Uses full-page redirect instead of a popup window.
+export const googleSignIn = async (): Promise<void> => {
+  try {
+    await signInWithRedirect(auth, provider);
   } catch (error: any) {
     console.error('Sign in error:', error);
     throw error;
-  } finally {
-    isSigningIn = false;
   }
 };
 
@@ -68,4 +108,9 @@ export const getAccessToken = async (): Promise<string | null> => {
 export const logout = async () => {
   await auth.signOut();
   cachedAccessToken = null;
+  try {
+    sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+  } catch {
+    // ignore storage errors on logout
+  }
 };

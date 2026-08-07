@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Upload, BookOpen, AlertCircle, CheckCircle, HelpCircle, ArrowRight, Brain, RefreshCw, Layers, Cloud } from 'lucide-react';
 import { Subject, CoverageSummary, Document } from '../types';
+import TiltCard from './TiltCard';
 
 interface CoverageTrackerProps {
   subjects: Subject[];
@@ -42,7 +43,7 @@ export default function CoverageTracker({
     module_number: number;
     topic: string;
     is_new_topic: boolean;
-    confidence: 'high' | 'medium' | 'low';
+    confidence: 'high' | 'medium' | 'low' | 'partial';
     note: string;
   } | null>(null);
 
@@ -168,17 +169,45 @@ export default function CoverageTracker({
             const ingestData = await res.json();
             
             setIngestionResult(ingestData);
+            setPipelineStep('classifying');
+            setUploadProgress('Running C1 classification prompt against taxonomy schema...');
+
+            // Run real classification so drive-imported docs are folded into
+            // the taxonomy instead of being parked as unassigned chunks.
+            try {
+              const classifyRes = await fetch('/api/classify', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  document_id: ingestData.document_id,
+                  headings: ingestData.sample_headings || 'Engineering course syllabus outline'
+                })
+              });
+              if (classifyRes.ok) {
+                const cData = await classifyRes.json();
+                setClassificationResult(cData.classification);
+              } else {
+                setClassificationResult({
+                  subject: selectedSubject.name,
+                  module_number: 1,
+                  topic: 'Imported from Google Drive',
+                  is_new_topic: false,
+                  confidence: 'partial',
+                  note: `Document "${filename}" imported from Google Drive. Classification could not be completed.`
+                });
+              }
+            } catch (classifyErr) {
+              console.error('Drive import classification failed:', classifyErr);
+              setClassificationResult({
+                subject: selectedSubject.name,
+                module_number: 1,
+                topic: 'Imported from Google Drive',
+                is_new_topic: false,
+                confidence: 'partial',
+                note: `Document "${filename}" imported from Google Drive. Classification could not be completed.`
+              });
+            }
             setPipelineStep('review');
-            
-            // Set mock/sample heading for classification review
-            setClassificationResult({
-              subject: selectedSubject.name,
-              module_number: 1,
-              topic: 'Imported from Google Drive',
-              is_new_topic: false,
-              confidence: 'high',
-              note: `This document "${filename}" was imported and RAG-chunked directly from Google Drive.`
-            });
           } else if (data.action === anyWin.google.picker.Action.CANCEL) {
             setPipelineStep('idle');
             setUploading(false);
@@ -358,7 +387,7 @@ export default function CoverageTracker({
           
           {/* Syllabus Progress Card (Left Column) */}
           <div className="lg:col-span-1 space-y-6">
-            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 shadow-lg">
+            <TiltCard className="bg-slate-900 border border-slate-800 p-6 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 shadow-lg">
               <h3 className="text-sm font-mono text-slate-400 uppercase tracking-wider">Overall Syllabus Coverage</h3>
               
               {/* Radial Circle */}
@@ -408,7 +437,7 @@ export default function CoverageTracker({
                   <div className="text-[10px] text-slate-400 font-mono">Unmapped Topics</div>
                 </div>
               </div>
-            </div>
+            </TiltCard>
 
             {/* Document Library List */}
             <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-4 shadow-lg">

@@ -46,6 +46,25 @@ export class ClassroomIntegrationService {
     this.accessToken = token;
   }
 
+  private authHeaders(): Record<string, string> {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (this.accessToken) {
+      headers['Authorization'] = `Bearer ${this.accessToken}`;
+    }
+    return headers;
+  }
+
+  private static async errorMessage(response: Response, fallback: string): Promise<string> {
+    try {
+      const body = await response.json();
+      if (body?.error) return body.error;
+      return JSON.stringify(body) || fallback;
+    } catch {
+      const text = await response.text();
+      return text || fallback;
+    }
+  }
+
   /**
    * Fetches Google Classroom courses linked to the user's account.
    */
@@ -53,10 +72,9 @@ export class ClassroomIntegrationService {
     if (!this.accessToken) {
       throw new Error('OAuth Access Token is required to fetch Classroom courses.');
     }
-    const response = await fetch(`/api/classroom/courses?accessToken=${this.accessToken}`);
+    const response = await fetch('/api/classroom/courses', { headers: this.authHeaders() });
     if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(errText || 'Failed to fetch Classroom courses');
+      throw new Error(await ClassroomIntegrationService.errorMessage(response, 'Failed to fetch Classroom courses'));
     }
     return response.json();
   }
@@ -68,10 +86,9 @@ export class ClassroomIntegrationService {
     if (!this.accessToken) {
       throw new Error('OAuth Access Token is required to fetch classroom materials.');
     }
-    const response = await fetch(`/api/classroom/courses/${courseId}/materials?accessToken=${this.accessToken}`);
+    const response = await fetch(`/api/classroom/courses/${courseId}/materials`, { headers: this.authHeaders() });
     if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(errText || 'Failed to fetch course materials');
+      throw new Error(await ClassroomIntegrationService.errorMessage(response, 'Failed to fetch course materials'));
     }
     return response.json();
   }
@@ -83,10 +100,9 @@ export class ClassroomIntegrationService {
     if (!this.accessToken) {
       throw new Error('OAuth Access Token is required to fetch course folders.');
     }
-    const response = await fetch(`/api/classroom/courses/${courseId}/folders?accessToken=${this.accessToken}`);
+    const response = await fetch(`/api/classroom/courses/${courseId}/folders`, { headers: this.authHeaders() });
     if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(errText || 'Failed to fetch course folders');
+      throw new Error(await ClassroomIntegrationService.errorMessage(response, 'Failed to fetch course folders'));
     }
     return response.json();
   }
@@ -98,10 +114,9 @@ export class ClassroomIntegrationService {
     if (!this.accessToken) {
       throw new Error('OAuth Access Token is required to fetch mapped files.');
     }
-    const response = await fetch(`/api/classroom/mappings/${mappingId}/files?accessToken=${this.accessToken}`);
+    const response = await fetch(`/api/classroom/mappings/${mappingId}/files`, { headers: this.authHeaders() });
     if (!response.ok) {
-      const errText = await response.text();
-      throw new Error(errText || 'Failed to fetch mapped files');
+      throw new Error(await ClassroomIntegrationService.errorMessage(response, 'Failed to fetch mapped files'));
     }
     return response.json();
   }

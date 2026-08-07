@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { 
   Layers, BookOpen, GraduationCap, Brain, HelpCircle, 
   FileText, Activity, Compass, Settings, Sparkles, Globe,
@@ -7,19 +7,24 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 
 import { Subject } from './types';
-import CoverageTracker from './components/CoverageTracker';
-import NotesEngine from './components/NotesEngine';
-import PYQManager from './components/PYQManager';
-import FlashcardsReview from './components/FlashcardsReview';
-import DoubtSolver from './components/DoubtSolver';
-import FormulaSheet from './components/FormulaSheet';
+import { initAuth, googleSignIn, logout, resolveRedirectSignIn } from './auth';
+
+// Lazy-load heavy feature modules so each tab ships as its own chunk
+const CoverageTracker = lazy(() => import('./components/CoverageTracker'));
+const NotesEngine = lazy(() => import('./components/NotesEngine'));
+const PYQManager = lazy(() => import('./components/PYQManager'));
+const FlashcardsReview = lazy(() => import('./components/FlashcardsReview'));
+const DoubtSolver = lazy(() => import('./components/DoubtSolver'));
+const FormulaSheet = lazy(() => import('./components/FormulaSheet'));
 import WorkspaceHub from './components/WorkspaceHub';
-import { initAuth, googleSignIn, logout } from './auth';
+import Login from './components/Login';
+import ImmersiveBackground from './components/ImmersiveBackground';
 
 export default function App() {
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
   const [activeTab, setActiveTab] = useState<'coverage' | 'notes' | 'pyqs' | 'flashcards' | 'doubt' | 'formulas' | 'workspace'>('coverage');
+  const [isDemoLoggedIn, setIsDemoLoggedIn] = useState(false);
 
   // Theme Management
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -45,18 +50,48 @@ export default function App() {
   useEffect(() => {
     fetchSubjects();
 
-    // Initialize the Firebase auth state listener
-    const unsubscribe = initAuth(
-      (currentUser, token) => {
-        setUser(currentUser);
-        setAccessToken(token);
-      },
-      () => {
-        setUser(null);
-        setAccessToken(null);
+    // Process any pending Google redirect sign-in first, then register the
+    // auth listener. This ensures the workspace access token is captured
+    // before onAuthStateChanged fires.
+    let active = true;
+    let unsubscribeAuth: (() => void) | null = null;
+
+    const registerAuthListener = () => {
+      if (unsubscribeAuth) return; // prevent double registration
+      unsubscribeAuth = initAuth(
+        (currentUser, token) => {
+          if (active) {
+            setUser(currentUser);
+            setAccessToken(token);
+          }
+        },
+        () => {
+          if (active) {
+            setUser(null);
+            setAccessToken(null);
+          }
+        }
+      );
+    };
+
+    // Resolve redirect result first (sets cachedAccessToken), THEN register listener
+    resolveRedirectSignIn().then((result) => {
+      if (!active) return;
+      if (result) {
+        setUser(result.user);
+        setAccessToken(result.accessToken);
       }
-    );
-    return () => unsubscribe();
+      // Token is now cached — safe to register the auth listener
+      registerAuthListener();
+    }).catch((err) => {
+      console.error('Failed to resolve redirect sign-in:', err);
+      if (active) registerAuthListener();
+    });
+
+    return () => {
+      active = false;
+      if (unsubscribeAuth) unsubscribeAuth();
+    };
   }, []);
 
   const fetchSubjects = async () => {
@@ -74,14 +109,13 @@ export default function App() {
 
   const handleLogin = async () => {
     try {
-      const result = await googleSignIn();
-      if (result) {
-        setUser(result.user);
-        setAccessToken(result.accessToken);
-      }
+      console.log('[Auth] Initiating Google sign-in redirect...');
+      await googleSignIn();
+      // signInWithRedirect returns immediately — the page will navigate away
     } catch (err: any) {
-      console.error("Login failed:", err);
-      alert("Sign-in failed. Please verify popup blocks are disabled.");
+      console.error('[Auth] Login failed:', err);
+      setUser(null);
+      setAccessToken(null);
     }
   };
 
@@ -95,8 +129,14 @@ export default function App() {
     }
   };
 
+  if (!isDemoLoggedIn) {
+    return <Login onLogin={() => setIsDemoLoggedIn(true)} onGoogleLogin={handleLogin} />;
+  }
+
   return (
     <div id="tattva-app" className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col md:flex-row">
+      
+      <ImmersiveBackground />
       
       {/* 1. SIDEBAR NAVIGATION */}
       <aside className="w-full md:w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0">
@@ -104,10 +144,20 @@ export default function App() {
           
           {/* Brand Identity / Logo */}
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-[#00F0FF]/20 to-[#B53CFF]/40 rounded-xl flex items-center justify-center border border-[#00F0FF]/50 shadow-[0_0_15px_rgba(181,60,255,0.5)] animate-arcane-pulse relative overflow-hidden">
-              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMTgiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgwLCAyNDAsIDI1NSwgMC4yKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHBhdGggZD0iTTIwIDJMMjAgMzgiIHN0cm9rZT0icmdiYSgxODEsIDYwLCAyNTUsIDAuMykiLz48cGF0aCBkPSJNMjAgMjBMMzYgMzYiIHN0cm9rZT0icmdiYSgyMTIsIDE3NSwgNTUsIDAuMykiLz48L3N2Zz4=')] opacity-50 bg-center bg-no-repeat" />
-              <span className="text-white font-serif font-bold text-2xl relative z-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">T</span>
-            </div>
+            <motion.div
+              className="w-12 h-12 [perspective:500px]"
+              whileHover={{ scale: 1.08 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 15 }}
+            >
+              <motion.div
+                className="w-12 h-12 bg-gradient-to-br from-[#00F0FF]/20 to-[#B53CFF]/40 rounded-xl flex items-center justify-center border border-[#00F0FF]/50 shadow-[0_0_15px_rgba(181,60,255,0.5)] animate-arcane-pulse relative overflow-hidden [transform-style:preserve-3d]"
+                whileHover={{ rotateY: 12, rotateX: -8, scale: 1.05 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 16 }}
+              >
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMTgiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgwLCAyNDAsIDI1NSwgMC4yKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PHBhdGggZD0iTTIwIDJMMjAgMzgiIHN0cm9rZT0icmdiYSgxODEsIDYwLCAyNTUsIDAuMykiLz48cGF0aCBkPSJNMjAgMjBMMzYgMzYiIHN0cm9rZT0icmdiYSgyMTIsIDE3NSwgNTUsIDAuMykiLz48L3N2Zz4=')] opacity-50 bg-center bg-no-repeat" />
+                <span className="text-white font-serif font-bold text-2xl relative z-10 drop-shadow-[0_0_8px_rgba(255,255,255,0.8)] [transform:translateZ(20px)]">T</span>
+              </motion.div>
+            </motion.div>
             <div className="space-y-0.5">
               <h1 className="font-serif font-light text-2xl leading-none text-transparent bg-clip-text bg-gradient-to-r from-slate-100 to-[#D4AF37] tracking-[0.25em]">TATTVA</h1>
               <p className="text-[10px] font-mono text-[#00F0FF] uppercase tracking-[0.25em] font-bold drop-shadow-[0_0_5px_rgba(0,240,255,0.5)]">Exam Engine</p>
@@ -248,12 +298,18 @@ export default function App() {
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.22, ease: "easeOut" }}
-            className="w-full"
+            initial={{ opacity: 0, y: 16, rotateX: 4, scale: 0.99 }}
+            animate={{ opacity: 1, y: 0, rotateX: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -16, rotateX: -4, scale: 0.99 }}
+            transition={{ duration: 0.28, ease: "easeOut" }}
+            className="w-full [perspective:1200px] [transform-style:preserve-3d]"
           >
+            <Suspense fallback={
+              <div className="flex flex-col items-center justify-center py-24 space-y-4">
+                <div className="w-9 h-9 border-2 border-accent-blue/30 border-t-accent-blue rounded-full animate-spin" />
+                <p className="text-xs font-mono text-slate-500 tracking-wide">Loading module...</p>
+              </div>
+            }>
             {activeTab === 'coverage' && (
               <CoverageTracker 
                 subjects={subjects}
@@ -309,6 +365,7 @@ export default function App() {
                 onRefreshSubjects={fetchSubjects}
               />
             )}
+            </Suspense>
           </motion.div>
         </AnimatePresence>
       </main>
