@@ -12508,12 +12508,18 @@
     {
       "id": "note-2",
       "topic_id": "top-cn-routing",
-      "version": 3,
+      "version": 4,
       "depth": "6mark",
       "content_md": "### Link State vs Distance Vector Routing\n\nThere are two primary algorithms used for path selection in the Network Layer:\n\n1. **Distance Vector Routing (DVR)**:\n   - Each router maintains a table (Vector) of minimum distances to all known destinations.\n   - Routers periodically exchange routing tables with direct neighbors only.\n   - Suffers from the **Count-to-Infinity problem** during link failures.\n   \n2. **Link State Routing (LSR)**:\n   - Each router builds and floods Link State Packets (LSPs) across the network.\n   - Every node independently calculates the shortest path tree using **Dijkstra's Algorithm**.\n   - High memory requirements but resolves topology changes instantly with zero convergence loops.\n\n*(Source: CN_Syllabus_Guide.pdf, p.14)*\n\n### Process Flow Visualizer\n\n```mermaid\ngraph TD\n    A[Start Process] --> B[Execute Algorithms]\n    B --> C{Decision Path}\n    C -->|Success| D[Final Output]\n    C -->|Failure| E[Review Logs]\n```\n",
       "confidence": "grounded",
-      "generated_at": "2026-07-22T17:47:11.472Z",
-      "summary_md": "- **Core Takeaway**: This is a key takeaway from the note about core principles.\n- **Significance**: Exam preparation requires focusing on key highlighted definitions.\n- **Application**: Practical questions often require executing specific algorithms outlined in the syllabus."
+      "generated_at": "2026-08-07T16:28:21.758Z",
+      "summary_md": "- **Core Takeaway**: This is a key takeaway from the note about core principles.\n- **Significance**: Exam preparation requires focusing on key highlighted definitions.\n- **Application**: Practical questions often require executing specific algorithms outlined in the syllabus.",
+      "tags": [
+        "Computer Networks",
+        "Routing Protocols",
+        "Data Structures",
+        "Algorithms"
+      ]
     },
     {
       "id": "note-1785522113999-xfrh6",
@@ -12706,6 +12712,16 @@
       "answer": "undefined *(Citation: CN_Syllabus.pdf)*",
       "ease_factor": 2.5,
       "next_review_at": "2026-07-31T18:22:02.556Z",
+      "interval_days": 0,
+      "repetitions": 0
+    },
+    {
+      "id": "fc-1786120106316-lsh1p",
+      "topic_id": "top-cn-routing",
+      "question": "What is the primary objective of Distance Vector Routing?",
+      "answer": "undefined *(Citation: CN_Syllabus.pdf)*",
+      "ease_factor": 2.5,
+      "next_review_at": "2026-08-07T16:28:26.316Z",
       "interval_days": 0,
       "repetitions": 0
     }
